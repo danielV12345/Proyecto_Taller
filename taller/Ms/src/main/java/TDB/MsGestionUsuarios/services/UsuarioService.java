@@ -28,4 +28,8 @@ public class UsuarioService {
         return usuarioRepository.findById(idUsuario).orElse(null);
      }
 
+     public void deleteUser(int idUsuario){
+        usuarioRepository.deleteById(idUsuario);
+     }
+
 }

@@ -2,6 +2,7 @@ package TDB.MsGestionUsuarios.controller;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -119,6 +120,26 @@ public class AuthController {
             
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error al editar usuario: " + e.getMessage());
+        }
+    }
+    @DeleteMapping("/eliminarUsuario")
+    public ResponseEntity<String> eliminarUsuario(@RequestParam int idUsuario) {
+        try {
+            // Buscar el usuario existente por su ID
+            UsuarioModel usuarioExistente = usuarioService.findById(idUsuario);
+
+            if (usuarioExistente == null) {
+
+                return ResponseEntity.status(404).body("Usuario no encontrado");
+            }
+
+            // Eliminar el usuario de la base de datos
+            usuarioService.deleteUser(idUsuario);
+
+            return ResponseEntity.ok("Usuario eliminado exitosamente");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error al eliminar usuario: " + e.getMessage());
         }
     }
 }
