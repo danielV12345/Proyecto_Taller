@@ -1,8 +1,12 @@
 package TDB.MsGestionUsuarios.controller;
+import java.util.Collections;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import TDB.MsGestionUsuarios.model.EmpleadoModel;
@@ -67,4 +71,18 @@ public class AuthController {
             return ResponseEntity.status(500).body("Error al crear usuario: " + e.getMessage());
          }
     } 
+    @GetMapping("/buscar")
+    public ResponseEntity<List<UsuarioModel>> buscarNombreUsuario(@RequestParam String nombreUsuario) {
+        
+        UsuarioModel usuario=usuarioService.findByUsername(nombreUsuario);
+        if (usuario == null){
+            return ResponseEntity.notFound().build();
+        }
+        else{
+            List<UsuarioModel> usuarios = Collections.singletonList(usuario);
+            return ResponseEntity.ok(usuarios);   
+            
+        }
+    }
+    
 }

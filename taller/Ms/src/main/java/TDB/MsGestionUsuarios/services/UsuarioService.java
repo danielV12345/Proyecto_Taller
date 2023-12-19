@@ -1,4 +1,6 @@
 package TDB.MsGestionUsuarios.services;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,5 +19,9 @@ public class UsuarioService {
     public UsuarioModel guardarUsuario(UsuarioModel usuario) {
         return usuarioRepository.save(usuario);
     }
+    
+    public List<UsuarioModel> findByUsernameContaining(String username) {
+       return usuarioRepository.findByUsernameContaining(username);
+     }
 
 }
