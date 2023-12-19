@@ -14,5 +14,8 @@ public class UsuarioService {
         orElse(null);
 
     }
+    public UsuarioModel guardarUsuario(UsuarioModel usuario) {
+        return usuarioRepository.save(usuario);
+    }
 
 }
