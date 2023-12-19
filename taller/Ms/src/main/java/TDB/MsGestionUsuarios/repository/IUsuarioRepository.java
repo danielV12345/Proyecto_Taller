@@ -10,5 +10,6 @@ import TDB.MsGestionUsuarios.model.UsuarioModel;
 public interface IUsuarioRepository extends JpaRepository<UsuarioModel, Integer>{
     Optional<UsuarioModel> findByUsername(String username);
     List<UsuarioModel> findByUsernameContaining(String username);
+    Optional<UsuarioModel> findById(int idUsuario);
     
 } 

@@ -24,4 +24,8 @@ public class UsuarioService {
        return usuarioRepository.findByUsernameContaining(username);
      }
 
+     public UsuarioModel findById(int idUsuario){
+        return usuarioRepository.findById(idUsuario).orElse(null);
+     }
+
 }

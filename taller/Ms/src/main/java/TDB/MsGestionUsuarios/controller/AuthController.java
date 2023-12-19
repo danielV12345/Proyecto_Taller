@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -84,5 +85,40 @@ public class AuthController {
             
         }
     }
-    
+    @PutMapping("/editarUsuario")
+    public ResponseEntity<String> editarUsuario(@RequestParam int idUsuario, @RequestBody UsuarioModel usuarioActualizado) {
+        try {
+            // Buscar el usuario existente por su ID
+            UsuarioModel usuarioExistente = usuarioService.findById(idUsuario);
+
+            if (usuarioExistente == null) {
+                return ResponseEntity.status(404).body("Usuario no encontrado");
+            }
+
+            // Actualizar los campos del usuario existente con los nuevos valores
+            usuarioExistente.setUsername(usuarioActualizado.getUsername());
+            usuarioExistente.setPassword(usuarioActualizado.getPassword());
+            usuarioExistente.setFechaCreacion(usuarioActualizado.getFechaCreacion());
+
+            EmpleadoModel empleadoExistente = usuarioExistente.getEmpleado();
+
+           if (empleadoExistente != null && usuarioActualizado.getEmpleado() != null) {
+                EmpleadoModel empleadoActualizado = usuarioActualizado.getEmpleado();
+                empleadoExistente.setIdTienda(empleadoActualizado.getIdTienda());
+                empleadoExistente.setNombres(empleadoActualizado.getNombres());
+                empleadoExistente.setApellidos(empleadoActualizado.getApellidos());
+                empleadoExistente.setEmail(empleadoActualizado.getEmail());
+                empleadoExistente.setTelefono(empleadoActualizado.getTelefono());
+                empleadoExistente.setFechaContratacion(empleadoActualizado.getFechaContratacion());
+                empleadoExistente.setSueldo(empleadoActualizado.getSueldo());
+                empleadoExistente.setIdCargo(empleadoActualizado.getIdCargo());
+            }
+            // Guardamos en la base de datos
+            usuarioService.guardarUsuario(usuarioExistente);
+            return ResponseEntity.ok("Usuario editado exitosamente");
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error al editar usuario: " + e.getMessage());
+        }
+    }
 }
