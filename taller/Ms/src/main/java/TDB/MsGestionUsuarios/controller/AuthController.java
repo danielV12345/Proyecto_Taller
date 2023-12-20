@@ -2,6 +2,9 @@ package TDB.MsGestionUsuarios.controller;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,7 +31,8 @@ import org.springframework.http.ResponseEntity;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     @Autowired
     private UsuarioService usuarioService;
     @Autowired
@@ -45,6 +49,8 @@ public class AuthController {
         
             if(usuario!=null && usuario.getPassword().equals(password)){
                 String authToken = generarTokenAutenticacion(usuario);
+                logger.info("Autenticación exitosa. Token: {}", authToken);
+
                 return new RespuestaGenerica("Autenticación exitosa. Token: " + authToken);
             } 
             else{
@@ -52,8 +58,11 @@ public class AuthController {
                 throw new AutenticacionException("Error de autenticación. Verifica tu nombre de usuario y contraseña.");
             }     
         } catch (AutenticacionException e) {
+            logger.error("Error de autenticación: {}", e.getMessage());
+
             return new RespuestaGenerica(e.getMessage());
         } catch (Exception e) {
+            logger.error("Error de autenticación: {}", e.getMessage());
             return new RespuestaGenerica("Error de autenticación: " + e.getMessage());
         }
        
@@ -74,6 +83,7 @@ public class AuthController {
             UsuarioModel existingUsuario = usuarioService.findByUsername(username);
 
             if (existingUsuario != null) {
+                logger.info("El usuario ya existe: {}");
                 throw new ErrorGeneral("El usuario ya existe");
                 // return ResponseEntity.status(400).body("Usuario ya existe");
             }
@@ -82,13 +92,15 @@ public class AuthController {
 
             UsuarioModel nuevoUsuario= usuarioService.guardarUsuario(usuario);
             return new RespuestaGenerica("Usuario creado exitosamente. : " + nuevoUsuario.getUsername()+
-            "\n nombre: "+nuevoEmpleado.getNombres());  
+            " nombre: "+nuevoEmpleado.getNombres());  
 
         } catch (ErrorGeneral e) {
             return new RespuestaGenerica(e.getMessage());
         } catch (DataIntegrityViolationException e) {
+            logger.error("Error en la base de datos: {}", e.getMessage());
             return new RespuestaGenerica("Error en la base de datos " + e.getMessage());
         } catch (Exception e) {
+            logger.error("Error al crear usuario: {}", e.getMessage());
             return new RespuestaGenerica("Error al crear usuario: " + e.getMessage());
         }
     } 
@@ -99,6 +111,7 @@ public class AuthController {
             UsuarioModel usuario=usuarioService.findByUsername(nombreUsuario);
         if (usuario == null){
             // return ResponseEntity.notFound().build();
+            logger.info("Usuario no encontrado:: {}");
             throw new ErrorGeneral("Usuario no encontrado: " + nombreUsuario);
         }
         else{
@@ -107,8 +120,10 @@ public class AuthController {
             
         }    
         } catch (ErrorGeneral e) {
+            logger.error("error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaGenerica(e.getMessage()));
         } catch (Exception e) {
+            logger.error("Error interno del servidor: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica("Error interno del servidor: " + e.getMessage()));
         }
         
@@ -121,6 +136,7 @@ public class AuthController {
 
             if (usuarioExistente == null) {
                 // return ResponseEntity.status(404).body("Usuario no encontrado");
+                logger.info("Usuario no encontrado: {} "+usuarioExistente);
                 throw new ErrorGeneral("Usuario no encontrado: "+usuarioExistente);
             }
 
@@ -148,10 +164,13 @@ public class AuthController {
             return ResponseEntity.ok(new RespuestaGenerica(mensaje));
             
         } catch (ErrorGeneral e) {
+            logger.error("error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaGenerica(e.getMessage()));
         } catch (DataIntegrityViolationException e) {
+            logger.error("Error en la base de datos: {} ", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new RespuestaGenerica("Error en la base de datos: " + e.getMessage()));
         }catch (Exception e) {
+            logger.error("Error interno del servidor: {} ", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica("Error interno del servidor: " + e.getMessage()));
         }
     }
@@ -162,6 +181,7 @@ public class AuthController {
             UsuarioModel usuarioExistente = usuarioService.findById(idUsuario);
 
             if (usuarioExistente == null) {
+                logger.info("Usuario no encontrado");
                 throw  new UsuarioNoEncontradoException("Usuario no encontrado"); 
             }
 
@@ -171,8 +191,10 @@ public class AuthController {
             return new RespuestaGenerica("Usuario eliminado exitosamente");
 
         }catch (UsuarioNoEncontradoException e) {
+            logger.error("error: {} ", e.getMessage());
             return new RespuestaGenerica(e.getMessage());
         }catch (Exception e) {
+            logger.error("Error al eliminar usuario: {}", e.getMessage());
             return new RespuestaGenerica("Error al eliminar usuario: " + e.getMessage());
         }
     }
