@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import TDB.MsGestionUsuarios.Excepciones.AutenticacionException;
 import TDB.MsGestionUsuarios.Excepciones.ErrorGeneral;
-import TDB.MsGestionUsuarios.Excepciones.ErrorMessage;
 import TDB.MsGestionUsuarios.Excepciones.UsuarioNoEncontradoException;
+import TDB.MsGestionUsuarios.RespuestaGenerica.RespuestaGenerica;
 import TDB.MsGestionUsuarios.model.EmpleadoModel;
 import TDB.MsGestionUsuarios.model.UsuarioModel;
 import TDB.MsGestionUsuarios.repository.IEmpleadoRepository;
@@ -36,7 +36,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UsuarioModel loginRequest){
+    public RespuestaGenerica login(@RequestBody UsuarioModel loginRequest){
         try {
              String username=loginRequest.getUsername();
             String password=loginRequest.getPassword();
@@ -45,16 +45,16 @@ public class AuthController {
         
             if(usuario!=null && usuario.getPassword().equals(password)){
                 String authToken = generarTokenAutenticacion(usuario);
-                return ResponseEntity.ok("Autenticación exitosa. Token: " + authToken);
+                return new RespuestaGenerica("Autenticación exitosa. Token: " + authToken);
             } 
             else{
                 // cuando la autenticación falle
                 throw new AutenticacionException("Error de autenticación. Verifica tu nombre de usuario y contraseña.");
             }     
         } catch (AutenticacionException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            return new RespuestaGenerica(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error de autenticación: " + e.getMessage());
+            return new RespuestaGenerica("Error de autenticación: " + e.getMessage());
         }
        
     }
@@ -65,7 +65,7 @@ public class AuthController {
     }
     
    @PostMapping("/crearUsuario")
-    public ResponseEntity<String> crearusuario(@RequestBody UsuarioModel usuario) {
+    public RespuestaGenerica crearusuario(@RequestBody UsuarioModel usuario) {
         try {
             // validamos antes de guardar el usuario
             //verificar si el nombre de usuario ya existe
@@ -81,15 +81,15 @@ public class AuthController {
             usuario.setEmpleado(nuevoEmpleado);
 
             UsuarioModel nuevoUsuario= usuarioService.guardarUsuario(usuario);
-            return ResponseEntity.ok("Usuario creado exitosamente. : " + nuevoUsuario.getUsername()+
+            return new RespuestaGenerica("Usuario creado exitosamente. : " + nuevoUsuario.getUsername()+
             "\n nombre: "+nuevoEmpleado.getNombres());  
 
         } catch (ErrorGeneral e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return new RespuestaGenerica(e.getMessage());
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error en la base de datos " + e.getMessage());
+            return new RespuestaGenerica("Error en la base de datos " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear usuario: " + e.getMessage());
+            return new RespuestaGenerica("Error al crear usuario: " + e.getMessage());
         }
     } 
     @GetMapping("/buscar")
@@ -99,7 +99,7 @@ public class AuthController {
             UsuarioModel usuario=usuarioService.findByUsername(nombreUsuario);
         if (usuario == null){
             // return ResponseEntity.notFound().build();
-            throw new ErrorGeneral("Usuario no encontrado " + nombreUsuario);
+            throw new ErrorGeneral("Usuario no encontrado: " + nombreUsuario);
         }
         else{
             List<UsuarioModel> usuarios = Collections.singletonList(usuario);
@@ -107,9 +107,9 @@ public class AuthController {
             
         }    
         } catch (ErrorGeneral e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonList(new ErrorMessage(e.getMessage())));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaGenerica(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica("Error interno del servidor: " + e.getMessage()));
         }
         
     }
@@ -144,18 +144,19 @@ public class AuthController {
             }
             // Guardamos en la base de datos
             usuarioService.guardarUsuario(usuarioExistente);
-            return ResponseEntity.ok("Usuario editado exitosamente");
+            String mensaje="Usuario editado exitosamente";
+            return ResponseEntity.ok(new RespuestaGenerica(mensaje));
             
         } catch (ErrorGeneral e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonList(new ErrorMessage(e.getMessage())));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaGenerica(e.getMessage()));
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error en la base de datos " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new RespuestaGenerica("Error en la base de datos: " + e.getMessage()));
         }catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica("Error interno del servidor: " + e.getMessage()));
         }
     }
     @DeleteMapping("/eliminarUsuario")
-    public ResponseEntity<String> eliminarUsuario(@RequestParam int idUsuario) {
+    public RespuestaGenerica eliminarUsuario(@RequestParam int idUsuario) {
         try {
             // Buscar el usuario existente por su ID
             UsuarioModel usuarioExistente = usuarioService.findById(idUsuario);
@@ -167,12 +168,12 @@ public class AuthController {
             // Eliminar el usuario de la base de datos
             usuarioService.deleteUser(idUsuario);
 
-            return ResponseEntity.ok("Usuario eliminado exitosamente");
+            return new RespuestaGenerica("Usuario eliminado exitosamente");
 
         }catch (UsuarioNoEncontradoException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return new RespuestaGenerica(e.getMessage());
         }catch (Exception e) {
-            return ResponseEntity.status(500).body("Error al eliminar usuario: " + e.getMessage());
+            return new RespuestaGenerica("Error al eliminar usuario: " + e.getMessage());
         }
     }
 }
