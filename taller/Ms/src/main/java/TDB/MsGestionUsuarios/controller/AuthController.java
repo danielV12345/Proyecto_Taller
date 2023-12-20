@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import TDB.MsGestionUsuarios.Excepciones.AutenticacionException;
 import TDB.MsGestionUsuarios.Excepciones.ErrorGeneral;
 import TDB.MsGestionUsuarios.Excepciones.UsuarioNoEncontradoException;
+import TDB.MsGestionUsuarios.Message.MensajesParametrizados;
 import TDB.MsGestionUsuarios.RespuestaGenerica.RespuestaGenerica;
 import TDB.MsGestionUsuarios.model.EmpleadoModel;
 import TDB.MsGestionUsuarios.model.UsuarioModel;
@@ -42,7 +43,7 @@ public class AuthController {
     @PostMapping("/login")
     public RespuestaGenerica login(@RequestBody UsuarioModel loginRequest){
         try {
-             String username=loginRequest.getUsername();
+            String username=loginRequest.getUsername();
             String password=loginRequest.getPassword();
 
             UsuarioModel usuario=usuarioService.findByUsername(username);
@@ -55,22 +56,23 @@ public class AuthController {
             } 
             else{
                 // cuando la autenticación falle
-                throw new AutenticacionException("Error de autenticación. Verifica tu nombre de usuario y contraseña.");
+                throw new AutenticacionException(MensajesParametrizados.MENSAJE_ERROR_AUTENTICACION);
             }     
         } catch (AutenticacionException e) {
-            logger.error("Error de autenticación: {}", e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_AUTENTICACION, e.getMessage());
 
             return new RespuestaGenerica(e.getMessage());
         } catch (Exception e) {
-            logger.error("Error de autenticación: {}", e.getMessage());
-            return new RespuestaGenerica("Error de autenticación: " + e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_AUTENTICACION, e.getMessage());
+            // return new RespuestaGenerica("Error de autenticación: " + e.getMessage());
+            return new RespuestaGenerica(MensajesParametrizados.MENSAJE_ERROR_AUTENTICACION + e.getMessage());
+
         }
        
     }
     private String generarTokenAutenticacion(UsuarioModel usuario) {
         // aqui generaremos el token con JWT
-        
-        return "TOKEN GENERADO CORRECTAMENTE";
+        return "asdfsjfhdskjhfkjdshfjdbsfkjbdskjfbdskjbfdsbfdsbfnbdsjfbdsjbfdsjbjdsbfjdsbfjbdsjbdsjbdfsj";
     }
     
    @PostMapping("/crearUsuario")
@@ -83,25 +85,24 @@ public class AuthController {
             UsuarioModel existingUsuario = usuarioService.findByUsername(username);
 
             if (existingUsuario != null) {
-                logger.info("El usuario ya existe: {}");
-                throw new ErrorGeneral("El usuario ya existe");
+                logger.info(MensajesParametrizados.MENSAJE_USUARIO_EXISTENTE);
+                throw new ErrorGeneral(MensajesParametrizados.MENSAJE_USUARIO_EXISTENTE);
                 // return ResponseEntity.status(400).body("Usuario ya existe");
             }
             EmpleadoModel nuevoEmpleado= empleadoRepository.save(usuario.getEmpleado());
             usuario.setEmpleado(nuevoEmpleado);
 
-            UsuarioModel nuevoUsuario= usuarioService.guardarUsuario(usuario);
-            return new RespuestaGenerica("Usuario creado exitosamente. : " + nuevoUsuario.getUsername()+
-            " nombre: "+nuevoEmpleado.getNombres());  
+            usuarioService.guardarUsuario(usuario);
+            return new RespuestaGenerica(MensajesParametrizados.MENSAJE_CREAR_USUARIO_EXITOSO);  
 
         } catch (ErrorGeneral e) {
             return new RespuestaGenerica(e.getMessage());
         } catch (DataIntegrityViolationException e) {
-            logger.error("Error en la base de datos: {}", e.getMessage());
-            return new RespuestaGenerica("Error en la base de datos " + e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_BASE_DATOS,(e.getMessage()));
+            return new RespuestaGenerica(MensajesParametrizados.MENSAJE_ERROR_BASE_DATOS);
         } catch (Exception e) {
-            logger.error("Error al crear usuario: {}", e.getMessage());
-            return new RespuestaGenerica("Error al crear usuario: " + e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_INTERNO_SERVIDOR,(e.getMessage()));
+            return new RespuestaGenerica(MensajesParametrizados.MENSAJE_ERROR_INTERNO_SERVIDOR);
         }
     } 
     @GetMapping("/buscar")
@@ -111,8 +112,8 @@ public class AuthController {
             UsuarioModel usuario=usuarioService.findByUsername(nombreUsuario);
         if (usuario == null){
             // return ResponseEntity.notFound().build();
-            logger.info("Usuario no encontrado:: {}");
-            throw new ErrorGeneral("Usuario no encontrado: " + nombreUsuario);
+            logger.info(MensajesParametrizados.usuarioNoEncontrado(nombreUsuario));
+            throw new ErrorGeneral(MensajesParametrizados.MENSAJE_USUARIO_NO_ENCONTRADO);
         }
         else{
             List<UsuarioModel> usuarios = Collections.singletonList(usuario);
@@ -120,11 +121,11 @@ public class AuthController {
             
         }    
         } catch (ErrorGeneral e) {
-            logger.error("error: {}", e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_ERROR,(e.getMessage()));
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaGenerica(e.getMessage()));
         } catch (Exception e) {
-            logger.error("Error interno del servidor: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica("Error interno del servidor: " + e.getMessage()));
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_INTERNO_SERVIDOR,(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica(MensajesParametrizados.errorServidor(e.getMessage())));
         }
         
     }
@@ -136,8 +137,8 @@ public class AuthController {
 
             if (usuarioExistente == null) {
                 // return ResponseEntity.status(404).body("Usuario no encontrado");
-                logger.info("Usuario no encontrado: {} "+usuarioExistente);
-                throw new ErrorGeneral("Usuario no encontrado: "+usuarioExistente);
+                logger.info(MensajesParametrizados.usuarioNoEncontradoPorId(idUsuario));
+                throw new ErrorGeneral(MensajesParametrizados.usuarioNoEncontradoPorId(idUsuario));
             }
 
             // Actualizar los campos del usuario existente con los nuevos valores
@@ -164,14 +165,14 @@ public class AuthController {
             return ResponseEntity.ok(new RespuestaGenerica(mensaje));
             
         } catch (ErrorGeneral e) {
-            logger.error("error: {}", e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_ERROR,e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaGenerica(e.getMessage()));
         } catch (DataIntegrityViolationException e) {
-            logger.error("Error en la base de datos: {} ", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new RespuestaGenerica("Error en la base de datos: " + e.getMessage()));
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_BASE_DATOS,e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new RespuestaGenerica(MensajesParametrizados.errorBaseDatos(e.getMessage())));
         }catch (Exception e) {
-            logger.error("Error interno del servidor: {} ", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica("Error interno del servidor: " + e.getMessage()));
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_INTERNO_SERVIDOR, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RespuestaGenerica(MensajesParametrizados.errorServidor(e.getMessage())));
         }
     }
     @DeleteMapping("/eliminarUsuario")
@@ -181,21 +182,20 @@ public class AuthController {
             UsuarioModel usuarioExistente = usuarioService.findById(idUsuario);
 
             if (usuarioExistente == null) {
-                logger.info("Usuario no encontrado");
-                throw  new UsuarioNoEncontradoException("Usuario no encontrado"); 
+                logger.info(MensajesParametrizados.usuarioNoEncontradoPorId(idUsuario));
+                throw  new UsuarioNoEncontradoException(MensajesParametrizados.usuarioNoEncontradoPorId(idUsuario)); 
             }
 
             // Eliminar el usuario de la base de datos
             usuarioService.deleteUser(idUsuario);
-
-            return new RespuestaGenerica("Usuario eliminado exitosamente");
+            return new RespuestaGenerica(MensajesParametrizados.MENSAJE_ELIMINAR_USUARIO_EXITOSO);
 
         }catch (UsuarioNoEncontradoException e) {
-            logger.error("error: {} ", e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_USUARIO_NO_ENCONTRADO,e.getMessage());
             return new RespuestaGenerica(e.getMessage());
         }catch (Exception e) {
-            logger.error("Error al eliminar usuario: {}", e.getMessage());
-            return new RespuestaGenerica("Error al eliminar usuario: " + e.getMessage());
+            logger.error(MensajesParametrizados.MENSAJE_ERROR_INTERNO_SERVIDOR,(e.getMessage()));
+            return new RespuestaGenerica(MensajesParametrizados.errorServidor(MensajesParametrizados.MENSAJE_ERROR_INTERNO_SERVIDOR));
         }
     }
 }
